@@ -16,6 +16,10 @@ public class GameManager : MonoBehaviour
     [Header("Prefabs")]
     [Tooltip("Arrastra aquí el Prefab de la bola.")]
     public GameObject ballPrefab;
+    [Tooltip("Arrastra aquí el objeto Paddle de la escena.")]
+    public GameObject paddle;
+    [Tooltip("Arrastra aquí un objeto vacío (NO el Canvas) para organizar las bolas.")]
+    public Transform contenedorBolas;
 
     [Header("Audio")]
     [Tooltip("Arrastra aquí el clip de audio para la música de fondo.")]
@@ -104,8 +108,25 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
+        // Buscar el paddle si no está asignado para alinear la bola en el eje Z
+        if (paddle == null)
+        {
+            PaddleMovement pm = FindObjectOfType<PaddleMovement>();
+            if (pm != null) paddle = pm.gameObject;
+        }
+
+        // Usar la posición Z del paddle para que estén en el mismo plano
+        Vector3 spawnPos = (paddle != null) ? new Vector3(0, 0, paddle.transform.position.z) : Vector3.zero;
+
         // Crear una nueva bola desde el prefab
-        Instantiate(ballPrefab, Vector3.zero, Quaternion.identity);
+        GameObject nuevaBola = Instantiate(ballPrefab, spawnPos, Quaternion.identity, contenedorBolas);
+
+        // Pasar la referencia del paddle a la bola para el rebote
+        Ball ballScript = nuevaBola.GetComponent<Ball>();
+        if (ballScript != null)
+        {
+            ballScript.SetPaddle(paddle);
+        }
     }
 
     // 5. Método llamado por los ladrillos al ser destruidos

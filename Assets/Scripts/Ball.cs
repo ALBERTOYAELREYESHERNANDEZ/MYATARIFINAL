@@ -1,63 +1,52 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))] // Ahora requerimos el Rigidbody 2D
 public class Ball : MonoBehaviour
 {
-    private Rigidbody2D rb; // Cambiamos a Rigidbody2D
-    public float velocidadMaxima = 20f;
-    public float velocidadMinima = 10f;
+    [Header("Configuración")]
+    [Tooltip("Fuerza del impulso inicial hacia arriba.")]
+    public float fuerzaImpulso = 300f;
+
+    [Tooltip("Velocidad vertical fija al rebotar en el paddle.")]
+    public float velocidadRebote = 10f;
+
+    private Rigidbody2D rb;
+    private GameObject paddle;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>(); // Obtenemos el Rigidbody2D
-        
-        // --- FORZAR CONFIGURACIÓN DEL RIGIDBODY DESDE CÓDIGO ---
-        // Esto anula cualquier configuración incorrecta en el Inspector.
-        rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.gravityScale = 0; // Sin gravedad.
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-        rb.constraints = RigidbodyConstraints2D.FreezeRotation; // Solo congelamos la rotación.
-        
-        LanzarBola();
-    }
+        rb = GetComponent<Rigidbody2D>();
 
-    private void LanzarBola()
-    {
-        float direccionX = Random.value < 0.5f ? -1f : 1f; // Dirección horizontal aleatoria
-
-        // Usamos Vector2 para la dirección en 2D.
-        Vector2 direccion = new Vector2(direccionX * 0.5f, 1).normalized;
-
-        rb.linearVelocity = direccion * velocidadMinima;
-
-        rb.WakeUp(); // Aseguramos que el Rigidbody esté activo
-    }
-
-    void FixedUpdate()
-    {
-        if (rb.linearVelocity.sqrMagnitude > 0)
+        if (rb != null)
         {
-            // Mantenemos la velocidad dentro de los límites
-            rb.linearVelocity = rb.linearVelocity.normalized * 
-                Mathf.Clamp(rb.linearVelocity.magnitude, velocidadMinima, velocidadMaxima);
+            // Activar la gravedad para que la pelota caiga
+            rb.gravityScale = 1f;
+
+            // Aplicar impulso hacia arriba
+            rb.AddForce(Vector2.up * fuerzaImpulso);
         }
     }
 
-    // Cambiamos a OnCollisionEnter2D para colisiones 2D
+    public void SetPaddle(GameObject _paddle)
+    {
+        paddle = _paddle;
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Paddle"))
+        // Comprobamos si es el paddle por referencia O buscando el componente (más seguro tras reinicios)
+        bool esPaddle = (paddle != null && collision.gameObject == paddle) || 
+                        collision.gameObject.GetComponent<PaddleMovement>() != null;
+
+        if (esPaddle)
         {
-            ContactPoint2D contacto = collision.GetContact(0);
+            // Generamos una dirección aleatoria en X entre -1 (izquierda) y 1 (derecha)
+            float xAleatorio = Random.Range(-1f, 1f);
+            
+            // Creamos un vector de dirección normalizado, siempre hacia arriba (y=1)
+            Vector2 direccion = new Vector2(xAleatorio, 1f).normalized;
 
-            float desplazamientoX =
-                (contacto.point.x - collision.transform.position.x)
-                / collision.collider.bounds.size.x;
-
-            // Nueva dirección de rebote en 2D
-            Vector2 nuevaDireccion = new Vector2(desplazamientoX, 1f).normalized;
-
-            rb.linearVelocity = nuevaDireccion * rb.linearVelocity.magnitude;
+            // Aplicamos la velocidad en esa dirección aleatoria
+            rb.linearVelocity = direccion * velocidadRebote;
         }
     }
 }
