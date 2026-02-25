@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement; // Necesario para reiniciar/cambiar escenas
 using System.Collections;
 using UnityEngine.UI; // Necesario para trabajar con componentes de UI como 'Image'
+using UnityEngine.UI;
+using TMPro; // Necesario para trabajar con TextMeshPro
 
 public class GameManager : MonoBehaviour
 {
@@ -12,6 +14,12 @@ public class GameManager : MonoBehaviour
     public int Puntuacion = 0;
     public int Vidas = 3;
     private int ladrillosRestantes; // Para saber cuándo ganar
+
+    [Header("UI de Juego")]
+    [Tooltip("Arrastra aquí el texto para mostrar la puntuación actual.")]
+    public TextMeshProUGUI textoPuntuacion;
+    [Tooltip("Arrastra aquí el texto para mostrar las vidas restantes.")]
+    public TextMeshProUGUI textoVidas;
 
     [Header("Prefabs")]
     [Tooltip("Arrastra aquí el Prefab de la bola.")]
@@ -81,6 +89,7 @@ public class GameManager : MonoBehaviour
         // Encontrar todos los ladrillos al inicio del nivel y reiniciar puntuación si es necesario
         ladrillosRestantes = FindObjectsByType<Brick>(FindObjectsSortMode.None).Length;
         Debug.Log("Ladrillos encontrados: " + ladrillosRestantes);
+        ActualizarUI(); // Actualizamos la UI al cargar el nivel
         // Reiniciar la bola para el nuevo nivel
         StartCoroutine(ReiniciarBolaConRetraso(1f));
     }
@@ -139,6 +148,7 @@ public class GameManager : MonoBehaviour
         }
 
         Puntuacion += puntosLadrillo;
+        ActualizarUI(); // Actualizamos la UI para que se vea la nueva puntuación
         ladrillosRestantes--;
         
         // Comprobar si ya no quedan ladrillos (Condición de victoria)
@@ -157,6 +167,8 @@ public class GameManager : MonoBehaviour
         Puntuacion = 0; // Reiniciamos la puntuación a 0
         // TODO: Actualizar el texto de la UI para que muestre la nueva puntuación
         Debug.Log("Puntuación reiniciada. Vidas restantes: " + Vidas);
+        Puntuacion = 0; // Opcional: Reiniciamos la puntuación a 0 al perder una vida
+        ActualizarUI(); // Actualizamos la UI para mostrar los cambios
 
         if (Vidas <= 0)
         {
@@ -173,6 +185,19 @@ public class GameManager : MonoBehaviour
         {
             // Si quedan vidas, se reinicia la bola
             ReiniciarBola(); 
+        }
+    }
+
+    // Método para actualizar toda la UI de juego (puntos y vidas)
+    private void ActualizarUI()
+    {
+        if (textoPuntuacion != null)
+        {
+            textoPuntuacion.text = "Puntuación: " + Puntuacion;
+        }
+        if (textoVidas != null)
+        {
+            textoVidas.text = "Vidas: " + Vidas;
         }
     }
 }
