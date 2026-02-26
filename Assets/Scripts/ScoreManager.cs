@@ -29,6 +29,12 @@ public class ScoreManager : MonoBehaviour
         // Implementación del Singleton
         if (Instancia != null && Instancia != this)
         {
+            // Si ya existe una instancia (porque volvimos al menú), actualizamos sus referencias de UI
+            // con las de esta nueva instancia temporal antes de destruirla.
+            Instancia.highScore1Text = this.highScore1Text;
+            Instancia.highScore2Text = this.highScore2Text;
+            Instancia.highScore3Text = this.highScore3Text;
+            Instancia.ActualizarVisualizacionPuntuaciones();
             Destroy(gameObject);
         }
         else
@@ -68,7 +74,7 @@ public class ScoreManager : MonoBehaviour
     }
 
    
-    private void ActualizarVisualizacionPuntuaciones()
+    public void ActualizarVisualizacionPuntuaciones()
     {
         if (highScore1Text != null)
             highScore1Text.text = $"1. {PlayerPrefs.GetInt(HighScore1Key, 0):D6}";
@@ -81,4 +87,3 @@ public class ScoreManager : MonoBehaviour
     }
 }
     
-

@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement; // Necesario para reiniciar/cambiar escenas
 using System.Collections;
 using UnityEngine.UI; // Necesario para trabajar con componentes de UI como 'Image'
-using UnityEngine.UI;
 using TMPro; // Necesario para trabajar con TextMeshPro
 
 public class GameManager : MonoBehaviour
@@ -20,6 +19,10 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI textoPuntuacion;
     [Tooltip("Arrastra aquí el texto para mostrar las vidas restantes.")]
     public TextMeshProUGUI textoVidas;
+    [Tooltip("Arrastra aquí el objeto vacío que contiene la pantalla de Game Over.")]
+    public GameObject pantallaGameOver;
+    [Tooltip("Arrastra aquí el objeto vacío que contiene la pantalla de Ganador.")]
+    public GameObject pantallaGanador;
 
     [Header("Prefabs")]
     [Tooltip("Arrastra aquí el Prefab de la bola.")]
@@ -50,8 +53,6 @@ public class GameManager : MonoBehaviour
         else
         {
             Instancia = this; // Se establece como la única instancia
-            transform.SetParent(null); // Asegura que el GameManager sea un objeto raíz
-            DontDestroyOnLoad(gameObject); // Evita que el GameManager se destruya al cargar otra escena
 
             // Configurar fuentes de audio
             musicSource = gameObject.AddComponent<AudioSource>();
@@ -66,20 +67,11 @@ public class GameManager : MonoBehaviour
 
             // Asegurarse de que el ScoreManager exista
             if (ScoreManager.Instancia == null) { /* No hacer nada, pero la referencia fuerza su creación si está bien configurado */ }
-
-            SceneManager.sceneLoaded += OnSceneLoaded;
         }
     }
 
-    private void OnDestroy()
+    private void Start()
     {
-        // Buena práctica para evitar memory leaks
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        // Aquí puedes añadir lógica para diferenciar entre menú y niveles de juego
         CargarNivel();
     }
 
@@ -89,6 +81,17 @@ public class GameManager : MonoBehaviour
         // Encontrar todos los ladrillos al inicio del nivel y reiniciar puntuación si es necesario
         ladrillosRestantes = FindObjectsByType<Brick>(FindObjectsSortMode.None).Length;
         Debug.Log("Ladrillos encontrados: " + ladrillosRestantes);
+
+        if (pantallaGameOver != null)
+        {
+            pantallaGameOver.SetActive(false);
+        }
+
+        if (pantallaGanador != null)
+        {
+            pantallaGanador.SetActive(false);
+        }
+
         ActualizarUI(); // Actualizamos la UI al cargar el nivel
         // Reiniciar la bola para el nuevo nivel
         StartCoroutine(ReiniciarBolaConRetraso(1f));
@@ -154,9 +157,26 @@ public class GameManager : MonoBehaviour
         // Comprobar si ya no quedan ladrillos (Condición de victoria)
         if (ladrillosRestantes <= 0 && FindObjectsByType<Brick>(FindObjectsSortMode.None).Length <= 0)
         {
-            // TODO: Lógica de ganar nivel/juego
             Debug.Log("¡Ganaste! Puntuación final: " + Puntuacion);
-            // SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1); // Carga el siguiente nivel
+
+            // Detener la bola
+            GameObject bolaExistente = GameObject.FindWithTag("Ball");
+            if (bolaExistente != null)
+            {
+                Destroy(bolaExistente);
+            }
+
+            // Activar la pantalla de ganador
+            if (pantallaGanador != null)
+            {
+                pantallaGanador.SetActive(true);
+            }
+
+            // Registrar la puntuación final en el ScoreManager
+            if (ScoreManager.Instancia != null)
+            {
+                ScoreManager.Instancia.RegistrarNuevaPuntuacion(Puntuacion);
+            }
         }
     }
 
@@ -164,16 +184,18 @@ public class GameManager : MonoBehaviour
     public void PerderVida()
     {
         Vidas--;
-        Puntuacion = 0; // Reiniciamos la puntuación a 0
-        // TODO: Actualizar el texto de la UI para que muestre la nueva puntuación
-        Debug.Log("Puntuación reiniciada. Vidas restantes: " + Vidas);
-        Puntuacion = 0; // Opcional: Reiniciamos la puntuación a 0 al perder una vida
         ActualizarUI(); // Actualizamos la UI para mostrar los cambios
 
         if (Vidas <= 0)
         {
             // Condición de Game Over
             Debug.Log("Game Over. Puntuación: " + Puntuacion);
+            
+            if (pantallaGameOver != null)
+            {
+                pantallaGameOver.SetActive(true);
+            }
+
             // Registra la puntuación final en el ScoreManager
             if (ScoreManager.Instancia != null)
             {
@@ -199,5 +221,14 @@ public class GameManager : MonoBehaviour
         {
             textoVidas.text = "Vidas: " + Vidas;
         }
+    }
+
+    // Método para reiniciar el juego (conectar al botón Retry)
+    public void ReiniciarJuego()
+    {
+        Puntuacion = 0;
+        Vidas = 3;
+        // Recargar la escena actual
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
