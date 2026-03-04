@@ -78,9 +78,12 @@ public class GameManager : MonoBehaviour
     // 3. Método para inicializar un nivel
     private void CargarNivel()
     {
+
+
         // Encontrar todos los ladrillos al inicio del nivel y reiniciar puntuación si es necesario
         ladrillosRestantes = FindObjectsByType<Brick>(FindObjectsSortMode.None).Length;
         Debug.Log("Ladrillos encontrados: " + ladrillosRestantes);
+
 
         if (pantallaGameOver != null)
         {
@@ -153,10 +156,10 @@ public class GameManager : MonoBehaviour
         Puntuacion += puntosLadrillo;
         ActualizarUI(); // Actualizamos la UI para que se vea la nueva puntuación
         ladrillosRestantes--;
-        
+
+
         // Comprobar si ya no quedan ladrillos (Condición de victoria)
-        if (ladrillosRestantes <= 0 && FindObjectsByType<Brick>(FindObjectsSortMode.None).Length <= 0)
-        {
+        if (Puntuacion >= 9)         {
             Debug.Log("¡Ganaste! Puntuación final: " + Puntuacion);
 
             // Detener la bola
