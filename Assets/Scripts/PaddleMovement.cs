@@ -21,13 +21,35 @@ public class PaddleMovement : MonoBehaviour
     {
         float inputHorizontal = Input.GetAxis("Horizontal");
 
+        inputHorizontal += ObtenerInputTouch();
+
         // Calculamos la nueva posición en 2D
         Vector2 nuevaPosicion = rb.position + new Vector2(inputHorizontal, 0) * velocidad * Time.fixedDeltaTime;
 
         // Limitamos la posición horizontal
         nuevaPosicion.x = Mathf.Clamp(nuevaPosicion.x, -limiteHorizontal, limiteHorizontal);
-        
+       
         // Movemos el Rigidbody a la nueva posición
         rb.MovePosition(nuevaPosicion);
+    }
+
+
+    private float ObtenerInputTouch()
+    {
+        if (Input.touchCount > 0)
+        {
+            Touch toque = Input.GetTouch(0);
+
+            // Si toca la mitad izquierda, devuelve -1. Si es la derecha, devuelve 1.
+            if (toque.position.x < Screen.width / 2)
+            {
+                return -1f;
+            }
+            else
+            {
+                return 1f;
+            }
+        }
+        return 0f; // Si no hay toque, no suma nada
     }
 }
